@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>能量密码用户协议</title>
+  <meta name="description" content="能量密码用户协议" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #ffffff;
+      --ink: #111111;
+      --muted: #666666;
+      --line: #e8e4dc;
+      --soft: #f7f5ef;
+      --accent: #d2aa4c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+      line-height: 1.75;
+    }
+
+    .page {
+      width: min(100% - 40px, 820px);
+      margin: 0 auto;
+      padding: 52px 0 72px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 46px;
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      width: 20px;
+      height: 20px;
+      display: inline-block;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1024' height='1024' viewBox='0 0 1024 1024'%3E%3Cpath d='M512 202c-132 0-240 103-240 230 0 78 38 146 98 188 32 22 48 58 48 96v10h188v-10c0-38 18-74 50-96 60-42 96-110 96-188 0-127-108-230-240-230z' fill='%23F7F5EF' stroke='%23111111' stroke-width='32' stroke-linejoin='round'/%3E%3Ccircle cx='512' cy='430' r='76' fill='%23D2AA4C'/%3E%3Cpath d='M430 774h164M454 840h116' stroke='%23111111' stroke-width='30' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: contain;
+    }
+
+    article {
+      padding: 0;
+    }
+
+    h1 {
+      margin: 0 0 28px;
+      color: var(--ink);
+      font-size: clamp(34px, 6vw, 56px);
+      line-height: 1.12;
+      font-weight: 780;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 42px 0 14px;
+      padding-top: 8px;
+      color: var(--ink);
+      font-size: 20px;
+      line-height: 1.45;
+      font-weight: 760;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: #303030;
+      font-size: 16px;
+    }
+
+    ol {
+      margin: 0 0 18px;
+      padding-left: 1.35em;
+      color: #303030;
+      font-size: 16px;
+    }
+
+    li {
+      margin: 0 0 9px;
+      padding-left: 2px;
+    }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: var(--soft);
+      color: var(--ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    .doc-name,
+    .quote-mark {
+      color: var(--ink);
+      font-weight: 620;
+    }
+
+    .footer {
+      margin-top: 56px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 560px) {
+      .page {
+        width: min(100% - 28px, 820px);
+        padding: 32px 0 54px;
+      }
+
+      .brand {
+        margin-bottom: 34px;
+      }
+
+      h1 {
+        margin-bottom: 22px;
+      }
+
+      h2 {
+        margin-top: 34px;
+        font-size: 18px;
+      }
+
+      p,
+      ol {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <a class="brand" href="./" aria-label="能量密码">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>能量密码</span>
+    </a>
+    <article>
+      <h1>能量密码用户协议</h1>
+      <p>生效日期：2026年5月25日</p>
+      <p>开发者/运营者：[请填写开发者或公司名称]</p>
+      <p>联系邮箱：[请填写联系邮箱]</p>
+      <p>欢迎使用<span class="quote-mark">“能量密码”</span>（以下简称<span class="quote-mark">“本应用”</span>）。请你在使用本应用前仔细阅读并理解本协议。你下载、安装、打开或使用本应用，即表示你已阅读、理解并同意受本协议约束。如果你不同意本协议，请停止使用本应用。</p>
+      <h2>1. 服务内容</h2>
+      <p>本应用是一款早晚鼓励语工具，主要功能包括：</p>
+      <ol>
+      <li><span class="quote-mark">“今日开机”</span>：在早晨或一天开始时，为用户展示积极、打气、帮助启动状态的文字内容。</li>
+      <li><span class="quote-mark">“睡前关灯”</span>：在晚上或休息前，为用户展示安慰、陪伴、帮助放松的文字内容。</li>
+      <li><span class="quote-mark">“换一句”</span>：用户可主动切换不同金句。</li>
+      <li><span class="quote-mark">“分享海报”</span>：用户可将当前金句生成白底黑字的极简风格海报，并通过系统分享面板保存或分享。</li>
+      </ol>
+      <p>当前版本的内容主要基于本地句库与本地算法生成和展示，不要求注册账号，不提供社交发布、评论、私信或用户上传内容功能。</p>
+      <h2>2. 使用规则</h2>
+      <p>你在使用本应用时应遵守适用法律法规、平台规则以及本协议约定。你不得利用本应用从事以下行为：</p>
+      <ol>
+      <li>破坏、干扰、攻击、逆向工程、反编译或试图绕过本应用的技术保护措施。</li>
+      <li>批量抓取、复制、出售、出租、分发本应用中的文字内容、设计素材、图标、界面或代码。</li>
+      <li>将本应用生成的内容用于违法、侵权、欺诈、骚扰、歧视、仇恨、误导或其他不当目的。</li>
+      <li>删除、遮挡或篡改本应用及海报中的品牌标识、版权信息或其他权利声明。</li>
+      </ol>
+      <h2>3. 内容说明</h2>
+      <p>本应用展示的金句、鼓励语、安慰语和分享海报仅用于日常情绪支持、生活鼓励与个人表达，不构成医疗、心理咨询、法律、财务、职业或其他专业建议。</p>
+      <p>如果你正在经历严重的情绪危机、健康问题或其他紧急情况，请及时联系专业人士、当地紧急救助机构或可信赖的身边人。本应用不能替代专业帮助。</p>
+      <p>我们会尽力保持内容温和、积极和适合公开展示，但不保证每一句内容都适用于所有用户、所有情境或所有文化背景。你应结合自身情况独立判断如何理解和使用相关内容。</p>
+      <h2>4. 分享海报与用户使用授权</h2>
+      <p>你可以将本应用生成的分享海报用于个人非商业用途，包括保存到本地、发送给朋友或发布到个人社交平台。</p>
+      <p>未经我们事先书面许可，你不得将本应用生成的内容或海报用于以下用途：</p>
+      <ol>
+      <li>批量制作、销售或分发商业素材包、课程、书籍、日历、卡片、周边商品或其他商业产品。</li>
+      <li>以暗示我们参与、赞助、认可或授权的方式进行商业宣传。</li>
+      <li>大规模复制、整理或建立与本应用实质相似的金句库、海报库或竞品服务。</li>
+      </ol>
+      <h2>5. 知识产权</h2>
+      <p>本应用中的软件代码、界面设计、图标、品牌名称、海报模板、文字内容、交互设计及其他相关素材，除依法属于第三方或另有说明外，均由我们或相关权利人享有知识产权。</p>
+      <p>本协议不向你转让任何知识产权。你仅获得为个人、非商业目的使用本应用的有限、非独占、不可转让、不可再授权的许可。</p>
+      <h2>6. 费用</h2>
+      <p>当前版本如在 App Store 免费提供，则你无需为下载和使用当前基础功能支付费用。未来如本应用增加付费功能、订阅、增值服务或其他收费项目，我们会在相关页面清楚说明价格、服务内容、续费规则和取消方式，并遵守 Apple App Store 的支付规则。</p>
+      <h2>7. 隐私保护</h2>
+      <p>我们重视你的隐私。当前版本不要求注册账号，不收集可识别个人身份的信息，不追踪用户，不接入第三方广告或统计 SDK。关于数据处理方式，请阅读<span class="doc-name">《能量密码隐私政策》</span>。</p>
+      <h2>8. 服务变更、中断与终止</h2>
+      <p>我们可能根据产品优化、系统维护、法律法规、平台规则或运营需要，对本应用的功能、内容、界面或服务进行调整。</p>
+      <p>在法律允许的范围内，我们不保证本应用在任何时间、任何设备、任何系统版本下都不会中断、延迟、出错或完全符合你的预期。</p>
+      <p>如果你违反本协议或适用法律法规，我们有权在合理范围内限制、暂停或终止你对本应用的使用。</p>
+      <h2>9. 免责声明</h2>
+      <p>在法律允许的最大范围内，本应用按<span class="quote-mark">“现状”</span>和<span class="quote-mark">“可用”</span>状态提供。我们不对以下事项作出明示或默示保证：</p>
+      <ol>
+      <li>本应用内容一定准确、完整、持续可用或适合你的特定目的。</li>
+      <li>本应用能够解决你的情绪、工作、生活、健康或人际问题。</li>
+      <li>本应用不会受到设备、系统、网络、平台政策或第三方服务变化的影响。</li>
+      </ol>
+      <p>你因使用或无法使用本应用而产生的间接损失、附带损失、特殊损失或后果性损失，在法律允许范围内由你自行承担。</p>
+      <h2>10. Apple 相关条款</h2>
+      <p>如果你通过 Apple App Store 下载本应用，你还应遵守 Apple Media Services Terms and Conditions 以及 App Store 的相关规则。Apple 不是本协议的一方，不负责本应用的内容、维护或用户支持。与本应用有关的问题，请通过本协议载明的联系方式与我们联系。</p>
+      <h2>11. 未成年人使用</h2>
+      <p>本应用面向一般用户提供日常鼓励文字，不专门面向儿童设计。未成年人应在监护人指导下使用本应用。监护人应对未成年人使用本应用的行为以及由此产生的后果承担监护责任。</p>
+      <h2>12. 协议更新</h2>
+      <p>我们可能根据产品功能、法律法规或平台要求更新本协议。更新后的协议会通过应用内页面、官方网站或其他合理方式展示。若你在协议更新后继续使用本应用，即表示你接受更新后的协议。</p>
+      <h2>13. 适用法律与争议解决</h2>
+      <p>本协议的订立、执行和解释适用中华人民共和国法律，但不包括冲突法规则。因本协议或本应用产生的争议，双方应先友好协商解决；协商不成的，任何一方可向有管辖权的人民法院提起诉讼。</p>
+      <p>如你的所在地法律对消费者权益、隐私保护或其他强制性事项另有规定，相关强制性规定不受本条影响。</p>
+      <h2>14. 联系我们</h2>
+      <p>如果你对本协议或本应用有任何问题、建议或投诉，可通过以下方式联系我们：</p>
+      <p>邮箱：[请填写联系邮箱]</p>
+      <p>开发者/运营者：[请填写开发者或公司名称]</p>
+    </article>
+    <p class="footer">© 2026 能量密码。请在上线前将开发者/运营者与联系邮箱替换为真实信息。</p>
+  </main>
+</body>
+</html>
