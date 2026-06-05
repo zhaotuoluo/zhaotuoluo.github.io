@@ -317,12 +317,85 @@ async function copyText(text, button) {
   }, 1200);
 }
 
-function buildStaticPage(url, note) {
+function normalizeUrl(url) {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+  return `https://${url}`;
+}
+
+function readMeta(document, selectors) {
+  for (const selector of selectors) {
+    const value = document.querySelector(selector)?.getAttribute("content");
+    if (value) return cleanText(value);
+  }
+  return "";
+}
+
+function parseHtml(html, url) {
+  const document = new DOMParser().parseFromString(html, "text/html");
+  document.querySelectorAll("script, style, noscript, svg, iframe, nav, footer, header").forEach((node) => node.remove());
+  const title = cleanText(
+    readMeta(document, ['meta[property="og:title"]', 'meta[name="twitter:title"]']) ||
+      document.querySelector("title")?.textContent ||
+      ""
+  );
+  const description = cleanText(
+    readMeta(document, ['meta[name="description"]', 'meta[property="og:description"]', 'meta[name="twitter:description"]'])
+  );
+  const author = cleanText(
+    readMeta(document, ['meta[name="author"]', 'meta[property="article:author"]']) ||
+      document.querySelector('[rel="author"]')?.textContent ||
+      ""
+  );
+  const mainText = cleanText(
+    document.querySelector("article")?.textContent ||
+      document.querySelector("main")?.textContent ||
+      document.body?.textContent ||
+      ""
+  ).slice(0, 1600);
+
+  return {
+    ok: true,
+    url,
+    page: {
+      title,
+      description,
+      author,
+      content: mainText
+    }
+  };
+}
+
+async function fetchPage(url) {
+  const targetUrl = normalizeUrl(url);
+  const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 12000);
+
+  try {
+    const response = await fetch(proxyUrl, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`读取失败：${response.status}`);
+    }
+    const html = await response.text();
+    const page = parseHtml(html, targetUrl);
+    const hasContent = page.page.title || page.page.description || page.page.content.length > 40;
+    if (!hasContent) throw new Error("没有读取到可用内容");
+    return page;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function buildFallbackPage(url, note, message) {
   const title = extractDeclaredTopic(note) || "";
   return {
     ok: true,
     url,
-    warning: url && !note ? "静态版不会自动抓取链接内容。只填链接也能生成，但建议补充老师内容摘要，留言会更准确。" : "",
+    warning:
+      url && !note
+        ? `${message || "暂时没有读取到链接内容"}。请补充老师内容摘要，留言会明显更准确。`
+        : message || "",
     page: {
       title,
       description: note,
@@ -351,11 +424,23 @@ generateButton.addEventListener("click", async () => {
   let warning = "";
 
   try {
-    if (url || note) {
-      const result = buildStaticPage(url, note);
+    if (url) {
+      let result;
+      try {
+        result = await fetchPage(url);
+        if (note) {
+          result.page.content = cleanText(`${note} ${result.page.content}`);
+          result.page.description = result.page.description || note;
+        }
+      } catch (readError) {
+        result = buildFallbackPage(url, note, readError.message);
+      }
       page = result.page || page;
       finalUrl = result.url || url;
       warning = result.warning || "";
+    } else if (note) {
+      const result = buildFallbackPage("", note, "");
+      page = result.page || page;
     }
 
     if (!page.content && !page.description && note) {
