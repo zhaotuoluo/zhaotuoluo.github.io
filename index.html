@@ -1,71 +1,76 @@
 <!doctype html>
 <html lang="zh-CN">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta http-equiv="refresh" content="0; url=https://creator-comment-assistant.vercel.app/" />
-    <link rel="canonical" href="https://creator-comment-assistant.vercel.app/" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>知识星球留言助手</title>
-    <style>
-      :root {
-        color-scheme: light;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        color: #1e293b;
-        background: #f7f8fb;
-      }
-
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        padding: 24px;
-      }
-
-      main {
-        width: min(520px, 100%);
-        padding: 32px;
-        border: 1px solid #dfe5ef;
-        border-radius: 8px;
-        background: #ffffff;
-        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
-      }
-
-      h1 {
-        margin: 0 0 12px;
-        font-size: 24px;
-        line-height: 1.25;
-        letter-spacing: 0;
-      }
-
-      p {
-        margin: 0 0 24px;
-        color: #64748b;
-        line-height: 1.7;
-      }
-
-      a {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 44px;
-        padding: 0 18px;
-        border-radius: 6px;
-        background: #0f766e;
-        color: #ffffff;
-        font-weight: 700;
-        text-decoration: none;
-      }
-    </style>
-    <script>
-      window.location.replace("https://creator-comment-assistant.vercel.app/");
-    </script>
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <main>
-      <h1>正在打开知识星球留言助手</h1>
-      <p>如果页面没有自动跳转，请点击下面的按钮继续使用。</p>
-      <a href="https://creator-comment-assistant.vercel.app/">打开留言助手</a>
+    <main class="app-shell">
+      <section class="workspace">
+        <div class="panel input-panel">
+          <div class="brand-row">
+            <div>
+              <p class="eyebrow">知识星球拉新</p>
+              <h1>社群合作留言助手</h1>
+            </div>
+            <span class="status-pill" id="statusPill">待输入</span>
+          </div>
+
+          <label class="field">
+            <span>老师作品或主页链接</span>
+            <input id="urlInput" type="url" placeholder="粘贴小红书 / 抖音 / 视频号 / 公众号文章 / 主页链接，方便记录来源" />
+          </label>
+
+          <label class="field">
+            <span>内容补充</span>
+            <textarea id="noteInput" rows="4" placeholder="建议填写：复制一段老师内容，或简单写主题、观点、案例、用户需求。默认目标是邀请老师来知识星球做付费社群。"></textarea>
+          </label>
+
+          <div class="control-grid">
+            <label class="field">
+              <span>留言目标</span>
+              <select id="goalInput">
+                <option value="引发思考">引发思考</option>
+                <option value="轻触达">轻触达</option>
+                <option value="邀请私信">邀请私信</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>语气</span>
+              <select id="toneInput">
+                <option value="真诚自然">真诚自然</option>
+                <option value="专业克制">专业克制</option>
+                <option value="温暖亲近">温暖亲近</option>
+              </select>
+            </label>
+          </div>
+
+          <button class="primary-button" id="generateButton">生成 3 条留言</button>
+
+          <div class="notice">
+            <strong>建议：</strong>为了保证团队都能打开，当前版本不自动抓取链接内容。评论区先不提合作、不提平台、不提付费，先让老师觉得自己的内容值得被长期承接。
+          </div>
+        </div>
+
+        <div class="panel result-panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">输出结果</p>
+              <h2>社群适配 + 3 条留言</h2>
+            </div>
+            <button class="ghost-button" id="copyAllButton" disabled>复制全部</button>
+          </div>
+
+          <div class="page-card" id="pageCard">
+            <p class="muted">粘贴链接后，这里会显示内容适不适合做知识星球、适合从哪个角度留言。</p>
+          </div>
+
+          <div class="comments" id="comments"></div>
+        </div>
+      </section>
     </main>
+    <script src="/script.js"></script>
   </body>
 </html>
