@@ -317,6 +317,8 @@ async function copyText(text, button) {
   }, 1200);
 }
 
+const ANALYZE_API = "https://creator-comment-assistant.vercel.app/api/analyze";
+
 function normalizeUrl(url) {
   if (!url) return "";
   if (/^https?:\/\//i.test(url)) return url;
@@ -366,43 +368,50 @@ function parseHtml(html, url) {
   };
 }
 
-async function fetchPage(url) {
+async function analyzeUrlWithProxy(url) {
   const targetUrl = normalizeUrl(url);
   const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
-  const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), 12000);
-
-  try {
-    const response = await fetch(proxyUrl, { signal: controller.signal });
-    if (!response.ok) {
-      throw new Error(`读取失败：${response.status}`);
-    }
-    const html = await response.text();
-    const page = parseHtml(html, targetUrl);
-    const hasContent = page.page.title || page.page.description || page.page.content.length > 40;
-    if (!hasContent) throw new Error("没有读取到可用内容");
-    return page;
-  } finally {
-    window.clearTimeout(timeout);
-  }
+  const response = await fetch(proxyUrl);
+  if (!response.ok) throw new Error(`备用读取失败：${response.status}`);
+  const html = await response.text();
+  const result = parseHtml(html, targetUrl);
+  const hasContent = result.page.title || result.page.description || result.page.content.length > 40;
+  if (!hasContent) throw new Error("备用读取没有拿到可用内容");
+  return result;
 }
 
-function buildFallbackPage(url, note, message) {
-  const title = extractDeclaredTopic(note) || "";
-  return {
-    ok: true,
-    url,
-    warning:
-      url && !note
-        ? `${message || "暂时没有读取到链接内容"}。请补充老师内容摘要，留言会明显更准确。`
-        : message || "",
-    page: {
-      title,
-      description: note,
-      author: "",
-      content: note
+async function analyzeUrl(url) {
+  try {
+    const response = await fetch(ANALYZE_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return { ...data, warning: data.error };
     }
-  };
+    return data;
+  } catch (error) {
+    try {
+      const result = await analyzeUrlWithProxy(url);
+      return {
+        ...result,
+        warning: "主读取接口暂时访问失败，已用备用方式读取内容"
+      };
+    } catch (fallbackError) {
+      return {
+        url,
+        warning: `${error.message || "主读取接口访问失败"}；${fallbackError.message || "备用读取也失败"}。请补充老师内容摘要，留言会更准确。`,
+        page: {
+          title: "",
+          description: "",
+          author: "",
+          content: ""
+        }
+      };
+    }
+  }
 }
 
 generateButton.addEventListener("click", async () => {
@@ -425,22 +434,14 @@ generateButton.addEventListener("click", async () => {
 
   try {
     if (url) {
-      let result;
-      try {
-        result = await fetchPage(url);
-        if (note) {
-          result.page.content = cleanText(`${note} ${result.page.content}`);
-          result.page.description = result.page.description || note;
-        }
-      } catch (readError) {
-        result = buildFallbackPage(url, note, readError.message);
-      }
+      const result = await analyzeUrl(url);
       page = result.page || page;
       finalUrl = result.url || url;
       warning = result.warning || "";
-    } else if (note) {
-      const result = buildFallbackPage("", note, "");
-      page = result.page || page;
+      if (note) {
+        page.content = cleanText(`${note} ${page.content || ""}`);
+        page.description = page.description || note;
+      }
     }
 
     if (!page.content && !page.description && note) {
