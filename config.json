@@ -1,0 +1,5 @@
+{
+  "requestTimeoutMs": 5500,
+  "analyzeApis": ["https://creator-comment-assistant.vercel.app/api/analyze"],
+  "readerProxies": ["codetabs", "allorigins"]
+}

@@ -10,6 +10,11 @@ const copyAllButton = document.querySelector("#copyAllButton");
 
 let currentComments = [];
 let currentFollowUp = "";
+let appConfig = {
+  requestTimeoutMs: 5500,
+  analyzeApis: ["https://creator-comment-assistant.vercel.app/api/analyze"],
+  readerProxies: ["codetabs", "allorigins"]
+};
 
 function cleanText(value = "") {
   return value.replace(/\s+/g, " ").trim();
@@ -317,7 +322,53 @@ async function copyText(text, button) {
   }, 1200);
 }
 
-const ANALYZE_API = "https://creator-comment-assistant.vercel.app/api/analyze";
+async function loadConfig() {
+  try {
+    const response = await fetch(`./config.json?v=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) return;
+    const config = await response.json();
+    appConfig = {
+      ...appConfig,
+      ...config,
+      analyzeApis: Array.isArray(config.analyzeApis) && config.analyzeApis.length ? config.analyzeApis : appConfig.analyzeApis,
+      readerProxies: Array.isArray(config.readerProxies) && config.readerProxies.length ? config.readerProxies : appConfig.readerProxies
+    };
+  } catch {
+    appConfig = { ...appConfig };
+  }
+}
+
+function timeoutSignal(timeoutMs) {
+  const controller = new AbortController();
+  window.setTimeout(() => controller.abort(), timeoutMs);
+  return controller.signal;
+}
+
+async function fetchWithTimeout(resource, options = {}) {
+  const timeoutMs = options.timeoutMs || appConfig.requestTimeoutMs || 5500;
+  const { timeoutMs: _timeoutMs, ...fetchOptions } = options;
+  return fetch(resource, {
+    ...fetchOptions,
+    signal: timeoutSignal(timeoutMs)
+  });
+}
+
+async function firstSuccessful(tasks) {
+  const errors = [];
+  return new Promise((resolve, reject) => {
+    let pending = tasks.length;
+
+    tasks.forEach((task) => {
+      task()
+        .then(resolve)
+        .catch((error) => {
+          errors.push(error);
+          pending -= 1;
+          if (pending === 0) reject(errors);
+        });
+    });
+  });
+}
 
 function normalizeUrl(url) {
   if (!url) return "";
@@ -368,49 +419,68 @@ function parseHtml(html, url) {
   };
 }
 
-async function analyzeUrlWithProxy(url) {
+function buildProxyUrl(proxy, targetUrl) {
+  if (proxy === "codetabs") {
+    return `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
+  }
+  if (proxy === "allorigins") {
+    return `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+  }
+  return "";
+}
+
+async function analyzeUrlWithProxy(url, proxy) {
   const targetUrl = normalizeUrl(url);
-  const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
-  const response = await fetch(proxyUrl);
-  if (!response.ok) throw new Error(`备用读取失败：${response.status}`);
+  const proxyUrl = buildProxyUrl(proxy, targetUrl);
+  if (!proxyUrl) throw new Error("备用读取通道未配置");
+  const response = await fetchWithTimeout(proxyUrl);
+  if (!response.ok) throw new Error(`${proxy} 读取失败：${response.status}`);
   const html = await response.text();
   const result = parseHtml(html, targetUrl);
   const hasContent = result.page.title || result.page.description || result.page.content.length > 40;
-  if (!hasContent) throw new Error("备用读取没有拿到可用内容");
+  if (!hasContent) throw new Error(`${proxy} 没有拿到可用内容`);
   return result;
 }
 
 async function analyzeUrl(url) {
-  try {
-    const response = await fetch(ANALYZE_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url })
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      return { ...data, warning: data.error };
-    }
-    return data;
-  } catch (error) {
-    try {
-      const result = await analyzeUrlWithProxy(url);
+  const tasks = [
+    ...appConfig.analyzeApis.map((apiUrl) => async () => {
+      const response = await fetchWithTimeout(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || `${apiUrl} 返回 ${response.status}`);
+      }
+      return data;
+    }),
+    ...appConfig.readerProxies.map((proxy) => async () => {
+      const result = await analyzeUrlWithProxy(url, proxy);
       return {
         ...result,
         warning: "主读取接口暂时访问失败，已用备用方式读取内容"
       };
-    } catch (fallbackError) {
-      return {
-        url,
-        warning: `${error.message || "主读取接口访问失败"}；${fallbackError.message || "备用读取也失败"}。请补充老师内容摘要，留言会更准确。`,
-        page: {
-          title: "",
-          description: "",
-          author: "",
-          content: ""
-        }
-      };
-    }
+    })
+  ];
+
+  try {
+    return await firstSuccessful(tasks);
+  } catch (errors) {
+    const messages = errors
+      .map((error) => (error.name === "AbortError" ? "读取接口访问超时" : error.message || "读取失败"))
+      .filter(Boolean);
+    return {
+      url,
+      warning: `${messages.slice(0, 3).join("；")}。请补充老师内容摘要，留言会更准确。`,
+      page: {
+        title: "",
+        description: "",
+        author: "",
+        content: ""
+      }
+    };
   }
 }
 
@@ -509,4 +579,4 @@ function applyQueryPreset() {
   }
 }
 
-applyQueryPreset();
+loadConfig().finally(applyQueryPreset);
