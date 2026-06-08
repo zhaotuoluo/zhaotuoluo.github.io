@@ -136,8 +136,187 @@ function analyzeCommunityFit(page, note) {
   };
 }
 
+function firstMatch(source, patterns) {
+  for (const pattern of patterns) {
+    const match = source.match(pattern);
+    if (match?.[1]) return cleanText(match[1]).replace(/[。；\n]+$/g, "");
+  }
+  return "";
+}
+
+function normalizeCreatorName(value = "") {
+  const name = cleanText(value)
+    .replace(/^(博主昵称|昵称|老师|作者)[:：]/, "")
+    .replace(/[｜|].*$/, "")
+    .trim();
+  if (!name) return "";
+  if (/老师|教授|博士|医生|导师/.test(name)) return name;
+  return `${name}老师`;
+}
+
+function parseCreatorProfile(page = {}, note = "", explicitProfile = {}) {
+  const source = [note, page.description, page.content].filter(Boolean).join("\n");
+  const titleParts = cleanText(page.title || "").split(/[｜|]/).map((item) => item.trim());
+  const profile = {
+    name: explicitProfile.name || explicitProfile.creatorName || explicitProfile.teacherName || explicitProfile["博主昵称"] || page.author || titleParts[0] || "",
+    platform: explicitProfile.platform || explicitProfile["平台"] || "",
+    followers: explicitProfile.followers || explicitProfile.fans || explicitProfile["粉丝数"] || "",
+    direction:
+      explicitProfile.direction ||
+      explicitProfile.contentDirection ||
+      explicitProfile["内容方向"] ||
+      explicitProfile["方向"] ||
+      "",
+    remark: explicitProfile.remark || explicitProfile.note || explicitProfile["备注"] || "",
+    link: explicitProfile.link || explicitProfile.url || explicitProfile["主页链接"] || ""
+  };
+
+  profile.name =
+    profile.name ||
+    firstMatch(source, [
+      /(?:博主昵称|昵称|老师|作者)[:：]\s*([^。；，,\n]+)/,
+      /(?:name|creatorName|teacherName)[:：]\s*([^。；，,\n]+)/i
+    ]);
+  profile.platform = profile.platform || firstMatch(source, [/(?:平台)[:：]\s*([^。；，,\n\s]+)/]);
+  profile.followers = profile.followers || firstMatch(source, [/(?:粉丝数|粉丝|followers|fans)[:：]\s*([^。；，,\n]+)/i]);
+  profile.direction =
+    profile.direction ||
+    firstMatch(source, [/(?:内容方向|方向|定位|领域)[:：]\s*([^。；\n]+)/]) ||
+    titleParts[1] ||
+    "";
+  profile.remark = profile.remark || firstMatch(source, [/(?:备注|补充|说明)[:：]\s*([^。；\n]+)/]);
+
+  Object.keys(profile).forEach((key) => {
+    profile[key] = cleanText(String(profile[key] || ""));
+  });
+
+  const combined = [source, page.title].filter(Boolean).join(" ");
+  profile.isLikelyProfile =
+    Boolean(profile.direction) &&
+    (/(博主昵称|内容方向|粉丝数|平台|备注|creatorName|teacherName|followers)/i.test(combined) ||
+      titleParts.length >= 2 ||
+      Boolean(explicitProfile.name || explicitProfile["博主昵称"]));
+
+  return profile;
+}
+
+function detectProfileCategory(profile) {
+  const source = `${profile.direction} ${profile.remark}`;
+  if (/转化|成交|私域|知识付费|课程|商业|增长|流量|选题/.test(source)) {
+    return {
+      label: "知识付费",
+      valuePoint: "把内容价值、用户问题和长期承接关系讲清楚",
+      question: "你这类内容最有意思的地方是，用户看完以后往往不是只要一个答案，而是会继续追问怎么落到自己身上。你平时会怎么判断哪些问题值得持续承接？",
+      series: "一个判断框架、一个真实案例、再回答大家落地时的卡点"
+    };
+  }
+  if (/职场|管理|创业|商业|IP|运营|品牌/.test(source)) {
+    return {
+      label: "商业成长",
+      valuePoint: "把复杂经验拆成别人能参考的判断",
+      question: "感觉这个方向不太适合只讲一次，很多人真正需要的是持续校准。你觉得评论区最常被追问的是方法，还是具体场景？",
+      series: "观点判断、案例拆解、具体场景答疑"
+    };
+  }
+  if (/心理|情绪|关系|认知|成长|沟通/.test(source)) {
+    return {
+      label: "个人成长",
+      valuePoint: "把抽象认知落到真实生活里的选择",
+      question: "很多人其实不是不认同，而是回到自己的处境里不知道怎么开始。你觉得这类内容最应该先解决哪个小问题？",
+      series: "一个真实场景、一个认知判断、一个可执行的小动作"
+    };
+  }
+  if (/学习|教育|阅读|英语|考试|训练|方法/.test(source)) {
+    return {
+      label: "学习方法",
+      valuePoint: "把长期学习这件事讲得更有节奏",
+      question: "感觉很多人不是缺方法，而是缺一个能坚持下去的反馈节奏。你会更看重方法拆解，还是阶段性答疑？",
+      series: "方法拆解、阶段反馈、问题答疑"
+    };
+  }
+  return {
+    label: profile.direction || "内容方向",
+    valuePoint: "把单篇内容背后的长期问题讲出来",
+    question: "这种内容看似是一条分享，其实很容易延展出很多具体问题。你觉得最值得继续拆的是观点、案例，还是评论区里的追问？",
+    series: "观点判断、案例拆解、大家追问的细节"
+  };
+}
+
+function buildProfileFollowUp({ creator, profile, category, fit }) {
+  const angle =
+    fit.score >= 78
+      ? "这类内容很适合做成持续答疑、案例拆解和阶段陪伴"
+      : "这个方向可以先从小范围持续交流试起来";
+  return cleanText(
+    `${creator}，我刚看了你在${category.label}方向的内容，感觉不只是单篇选题，而是一类人会反复遇到的问题。${angle}。如果你愿意，我可以帮你一起梳理一个知识星球的主题定位和第一批内容结构，先不急着推广，先判断这个方向值不值得做。`
+  );
+}
+
+function buildProfileComments({ page, note, goal, tone, profile }) {
+  const profileFitNote = cleanText(
+    [
+      profile.name && `博主昵称：${profile.name}`,
+      profile.platform && `平台：${profile.platform}`,
+      profile.followers && `粉丝数：${profile.followers}`,
+      profile.direction && `内容方向：${profile.direction}`,
+      profile.remark && `备注：${profile.remark}`,
+      "这类内容适合观察是否能延展成持续答疑、案例拆解、方法陪跑或主题社群。"
+    ]
+      .filter(Boolean)
+      .join("。")
+  );
+  const fit = analyzeCommunityFit(page, [note, profileFitNote].filter(Boolean).join("。"));
+  const creator = normalizeCreatorName(profile.name) || detectCreator(page);
+  const category = detectProfileCategory(profile);
+  const direction = profile.direction || category.label;
+  const remarkPart = profile.remark ? `，尤其是你补充里提到的「${profile.remark}」` : "";
+  const platformPart = profile.platform ? `在${profile.platform}` : "";
+  const followersPart = profile.followers ? `能积累到${profile.followers}粉` : "能持续输出";
+  const toneLine =
+    tone === "专业克制"
+      ? "这个方向的信息密度和长期讨论空间都挺强。"
+      : tone === "温暖亲近"
+        ? "感觉能帮很多人把焦虑落到更具体的行动上。"
+        : "读起来会让人自然想继续追问后面的做法。";
+  const thirdByGoal = {
+    引发思考: `${creator}，这个方向其实很适合做长期系列：${category.series}。单条内容能打开话题，但后面的追问应该会更多。`,
+    轻触达: `${creator}，如果你后面把「${direction}」做成连续系列，应该会很有价值。它解决的不是一次性疑问，而是一类人会反复遇到的问题。`,
+    邀请私信: `${creator}，这个「${direction}」方向我觉得很适合再往持续答疑/案例拆解延展，想跟你请教下你对这类内容承接的想法，方便私信交流吗？`
+  }[goal] || `${creator}，这个方向其实很适合做长期系列：${category.series}。单条内容能打开话题，但后面的追问应该会更多。`;
+
+  const comments = [
+    {
+      type: "定位理解型",
+      text: `${creator}，看到你${platformPart}一直做「${direction}」${remarkPart}，感觉你很擅长${category.valuePoint}。${toneLine}`,
+      tags: ["低打扰", "适合首次互动"]
+    },
+    {
+      type: "追问型",
+      text: `${creator}，${followersPart}，说明这个方向确实有人持续关心。${category.question}`,
+      tags: ["引导思考", "适合评论区互动"]
+    },
+    {
+      type: goal === "邀请私信" ? "私信引导型" : "社群暗示型",
+      text: thirdByGoal,
+      tags: goal === "邀请私信" ? ["谨慎使用", "需人工确认"] : ["不提合作", "引发社群联想"]
+    }
+  ].map((item) => ({
+    ...item,
+    text: cleanText(item.text).replace(/你在一直做/g, "你一直做")
+  }));
+
+  return {
+    fit,
+    comments,
+    followUp: buildProfileFollowUp({ creator, profile, category, fit }),
+    topic: direction,
+    contentType: "profile",
+    profile
+  };
+}
+
 function detectCreator(page) {
-  if (page.author) return `${page.author}老师`;
+  if (page.author) return normalizeCreatorName(page.author);
   return "老师";
 }
 
@@ -149,7 +328,12 @@ function sentenceFromSignal(title, topic) {
   return `看到你这条「${shortTitle}」`;
 }
 
-function buildComments({ page, note, goal, tone }) {
+function buildComments({ page, note, goal, tone, mode = "auto", profile = {} }) {
+  const creatorProfile = parseCreatorProfile(page, note, profile);
+  if (mode === "profile" || (mode === "auto" && creatorProfile.isLikelyProfile)) {
+    return buildProfileComments({ page, note, goal, tone, profile: creatorProfile });
+  }
+
   const creator = detectCreator(page);
   const topic = pickTopic(page, note);
   const contentType = inferContentType(page, note);
@@ -213,7 +397,9 @@ function buildComments({ page, note, goal, tone }) {
       ...item,
       text: cleanText(item.text)
     })),
-    followUp: buildFollowUp({ creator, topic, fit })
+    followUp: buildFollowUp({ creator, topic, fit }),
+    topic,
+    contentType
   };
 }
 
@@ -516,6 +702,22 @@ generateButton.addEventListener("click", async () => {
 
     if (!page.content && !page.description && note) {
       page.content = note;
+    }
+
+    const hasReadableContent = Boolean(cleanText([page.title, page.description, page.author, page.content].join(" ")));
+    if (url && !note && !hasReadableContent) {
+      renderPage(
+        page,
+        finalUrl,
+        warning || "没有读取到这个链接里的可用内容。为避免生成无关留言，请复制老师内容摘要或评论区问题到“内容补充”后再生成。",
+        null
+      );
+      comments.innerHTML = "";
+      currentComments = [];
+      currentFollowUp = "";
+      copyAllButton.disabled = true;
+      statusPill.textContent = "需补充";
+      return;
     }
 
     const analysis = buildComments({
